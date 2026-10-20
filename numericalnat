@@ -1,0 +1,85 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+def central_difference(func, x, h=1e-5):
+    """
+    Approximate f'(x) using the central difference formula:
+        (f(x+h) - f(x-h)) / (2h)
+    """
+    return (func(x + h) - func(x - h)) / (2 * h)
+
+
+def approximate_derivative(func, interval, num_points=200, h=None):
+    """
+    Return x-values and numerical derivative values for a function on an interval.
+    """
+    a, b = interval
+
+    if a >= b:
+        raise ValueError("interval must satisfy interval[0] < interval[1]")
+
+    if h is None:
+        h = (b - a) / (10 * num_points)
+
+    xs = np.linspace(a, b, num_points)
+    deriv = np.array([central_difference(func, x, h=h) for x in xs], dtype=float)
+
+    return xs, deriv
+
+
+def fit_derivative_polynomial(xs, deriv, degree=3):
+    """
+    Fit a polynomial to the numerically approximated derivative.
+    Returns a numpy poly1d object.
+    """
+    if degree < 1:
+        raise ValueError("degree must be >= 1")
+
+    coeffs = np.polyfit(xs, deriv, degree)
+    polynomial = np.poly1d(coeffs)
+    return polynomial
+
+
+def derivative_plot(func, interval, degree=3, num_points=200, h=None):
+    """
+    Plot the function and its numerical derivative, then fit a polynomial
+    to the derivative and return the polynomial approximation.
+    """
+    xs, deriv = approximate_derivative(func, interval, num_points=num_points, h=h)
+    poly = fit_derivative_polynomial(xs, deriv, degree=degree)
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(xs, func(xs), label="f(x)", linewidth=2)
+    plt.plot(xs, deriv, label=r"Numerical f'(x)", linewidth=2)
+    plt.plot(xs, poly(xs), label=f"Polynomial fit (degree {degree})", linestyle="--", linewidth=2)
+    plt.axhline(0, color="black", linewidth=0.8)
+    plt.axvline(0, color="black", linewidth=0.8)
+    plt.grid(True, alpha=0.3)
+    plt.title("Function and Numerical Derivative")
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.legend()
+    plt.show()
+
+    print("Polynomial coefficients (highest power first):")
+    print(poly.coeffs)
+
+    return poly
+
+
+if __name__ == "__main__":
+    # Example functions
+    def f1(x):
+        return x**3 - 3*x + 1
+
+    def f2(x):
+        return np.sin(x)
+
+    def f3(x):
+        return np.exp(x)
+
+    # Example usage
+    poly1 = derivative_plot(f1, (-2, 2), degree=3)
+    poly2 = derivative_plot(f2, (-np.pi, np.pi), degree=5)
+    poly3 = derivative_plot(f3, (-1, 1), degree=4)
